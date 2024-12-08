@@ -8,7 +8,7 @@ console.log('Product model loaded successfully');
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect('mongodb://localhost:27017/inventoryDB', {
+mongoose.connect('mongodb://localhost:27017/inventoryManagementSystem', {
     useNewUrlParser: true,
     useUnifiedTopology: true
 }).then(() => console.log('Database connected')).catch(err => console.log(err));
