@@ -1,27 +1,29 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-
 const app = express();
-console.log('Product model loaded successfully');
+const Product = require('./models/Product');
 
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect('mongodb://localhost:27017/inventoryManagementSystem', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => console.log('Database connected')).catch(err => console.log(err));
+try {
+    // mongoose.connect('mongodb+srv://aryantuladhar:testing123@cluster0.bop6waa.mongodb.net/inventoryManagementDB?retryWrites=true&w=majority&appName=Cluster0').then(() => console.log('MongoDB connected'));
+    mongoose.connect('mongodb://localhost:27017/inventoryDB').then(() => console.log('MongoDB connected'));
+} catch (err) {
+    console.error(err);
+}
 
 app.get('/', (req, res) => {
     res.send('Server is running');
 });
 
+app.use('/', require('./routes/auth'));
+
 app.listen(5000, () => {
     console.log('Server is running on port 5000');
 });
 
-const Product = require('./models/Product');
 
 // Add product
 app.post('/api/products', async (req, res) => {
