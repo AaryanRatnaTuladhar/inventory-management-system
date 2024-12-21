@@ -2,7 +2,7 @@ const Product = require("../models/Product");
 const User = require("../models/User");
 const mongoose = require("mongoose");
 
-const handleCreateProduct = async (req, res) => {
+const createNewProduct = async (req, res) => {
   try {
     const { name, category, price, quantity } = req.body;
 
@@ -38,7 +38,7 @@ const handleCreateProduct = async (req, res) => {
   }
 };
 
-const handleGetAllProductes = async (req, res) => {
+const getAllProductes = async (req, res) => {
   try {
     const allProductes = await Product.find({}).exec();
     if (allProductes) {
@@ -106,4 +106,9 @@ const updateProduct = async (req, res) => {
       .json({ success: false, message: "Internal server error" });
   }
 };
-module.exports = { handleCreateProduct, handleGetAllProductes, deleteProduct, updateProduct };
+module.exports = { 
+  createNewProduct, 
+  getAllProductes, 
+  deleteProduct, 
+  updateProduct
+};

@@ -1,26 +1,64 @@
-const User = require("../model/User");
-const Users = require("../model/User");
+const Users = require("../models/User");
 const jwt = require("jsonwebtoken");
-require("dotenv").config();
+// require('dotenv').config();
 const bcrypt = require("bcrypt");
-const allRoles = require("../config/roles_list");
-const crypto = require("crypto");
+// const allRoles = require("../config/roles_list");
+// const crypto = require("crypto");
 
+const loginUser = async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password)
+  return res.status(400).json({ message: "Email or password missing" });
+  // console.log(User, email, password, "========");
+  const foundUser = await User.findOne({ email: email }).exec();
+  // console.log(foundUser);
+  if (!foundUser) {
+    console.log("401:", email, "User does not exist");
+    return res
+      .status(401)
+      .json({ error: "Unauthorized: User does not exist." });
+  }
+  //evaluate password
+  // console.log("pass", password, "fUpass:", foundUser.password);
+  const match = await bcrypt.compare(password, foundUser.password);
+  if (match) {
+    const roles = Object.values(foundUser.roles);
+    // create and send JWT
+    // console.log("asdf", process.env.ACCESS_TOKEN_SECRET, foundUser.username);
+    // console.log(" secret", process.env.ACCESS_TOKEN_SECRET)
+    const accessToken = jwt.sign(
+      {
+        'UserInfo': 
+          { 
+            'username': foundUser.username, 
+            'roles': roles, 
+            'email': email
+          }
+      },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "5d" }
+    );
+    res.status(200).json({success: true, token: accessToken });
+  } else {
+    // console.log("lastres");
+    res.sendStatus({ success: false, message: 401} );
+  }
+};
 
-const handleNewUser = async (req, res) => {
-  const { username, password, email} = req.body;
-
-  if (!username || !password || !email)
+const createNewUser = async (req, res) => {
+  const { username, email, password} = req.body;
+  // console.log("usernaem, email, password", username, email, password);
+  if (!username || !email || !password)
     return res
       .status(400)
       .json({ message: "Username | password | email are required" });
 
-  //check for duplicate emails in database;
-  const duplicate = await User.findOne({ email }).exec();
-  if (duplicate) return res.status(409).json({ error: "User Already Exists!" }); //Conflict
+  // //check for duplicate emails in database;
+  // const duplicate = await User.findOne({ email }).exec();
+  // if (duplicate) return res.status(409).json({ error: "User Already Exists!" }); //Conflict
   try {
-        const hashedPwd = await bcrypt.hash(password, 10);
-      const result = await User.create({
+      const hashedPwd = await bcrypt.hash(password, 10);
+      const result = await Users.create({
         username,
         email,
         password: hashedPwd
@@ -36,7 +74,7 @@ const handleNewUser = async (req, res) => {
 };
 
 
-const handleGetAllUsers = async (req, res) => {
+const getAllUsers = async (req, res) => {
   try {
     // console.log("\nhello");
     const allUsers = await Users.find({}).exec();
@@ -129,8 +167,9 @@ const getUserDetails = async (req, res) => {
 };
 
 module.exports = {
-  handleNewUser,
-  handleGetAllUsers,
+  loginUser,
+  createNewUser,
+  getAllUsers,
   deleteUser,
   updateUser,
   getUserDetails
