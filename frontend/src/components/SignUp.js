@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom"; // React Router for navigation
+import { Link } from "react-router-dom";
 import "../styles/SignUp.css";
+import { useNavigate } from "react-router-dom";
 
 const SignUp = () => {
     const [formData, setFormData] = useState({
@@ -11,9 +12,10 @@ const SignUp = () => {
 
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+    const navigate = useNavigate();
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.usename]: e.target.value });
+        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
     const handleSubmit = async (e) => {
@@ -27,12 +29,17 @@ const SignUp = () => {
                 },
                 body: JSON.stringify(formData),
             });
+            console.log("FormData being sent:", formData);
 
             const result = await response.json();
+            console.log("result", result);
 
             if (response.ok) {
                 setSuccess("Sign-up successful!");
                 setError(""); // Clear any errors
+                localStorage.setItem("user", JSON.stringify(result.user));
+
+                navigate("/dashboard", { state: { user: result.user } });
             } else {
                 setError(result.message || "Failed to sign up. Please try again.");
             }
@@ -51,8 +58,8 @@ const SignUp = () => {
                     Name:
                     <input
                         type="text"
-                        name="name"
-                        value={formData.name}
+                        name="username"
+                        value={formData.username}
                         onChange={handleChange}
                         required
                     />

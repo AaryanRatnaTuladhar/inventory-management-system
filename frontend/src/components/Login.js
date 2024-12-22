@@ -1,24 +1,78 @@
-import React from "react";
+import React, {useState} from "react";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "../styles/Login.css";
 
 const Login = () => {
+    const [formData, setFormData] = useState({
+        email: "",
+        password: "",
+      });
+    
+      const [error, setError] = useState("");
+      const navigate = useNavigate(); // To programmatically navigate to another page
+    
+      const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+      };
+    
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+    
+        try {
+          const response = await fetch("http://localhost:5000/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formData),
+          });
+    
+          const result = await response.json();
+    
+          if (response.ok) {
+            // Login successful
+            setError("");
+            localStorage.setItem("user", JSON.stringify(result.user)); // Save user data to localStorage
+            navigate("/dashboard"); // Navigate to the dashboard
+          } else {
+            // Show error message from the server
+            setError(result.message || "Login failed. Please try again.");
+          }
+        } catch (err) {
+          setError("An error occurred. Please try again later.");
+        }
+      };
+
     return (
         <div className="login-container">
             <h2>Login</h2>
-            <form>
+            {error && <p className="error">{error}</p>}
+            <form onSubmit={handleSubmit}>
                 <label>
-                    Email:
-                    <input type="email" name="email" required />
+                Email:
+                <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                />
                 </label>
                 <label>
-                    Password:
-                    <input type="password" name="password" required />
+                Password:
+                <input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                />
                 </label>
                 <button type="submit">Login</button>
             </form>
             <p>
-                Don't have an account? <Link to="/signup">Sign Up here</Link>
+                Don't have an account? <Link to="/signup">Sign up here</Link>
             </p>
         </div>
     );

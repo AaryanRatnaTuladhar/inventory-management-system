@@ -6,11 +6,27 @@ const bcrypt = require("bcrypt");
 // const crypto = require("crypto");
 
 const loginUser = async (req, res) => {
+
+  // const { email, password } = req.body;
+
+  // if (!email || !password) {
+  //   return res.status(400).json({ message: 'Email and password are required.' });
+  // }
+
+  // // Check for the user in the database
+  // const user = await Users.findOne({ email });
+
+  // if (!user || user.password !== password) { // Replace with proper password hashing check
+  //   return res.status(401).json({ message: 'Invalid credentials.' });
+  // }
+
+  // res.status(200).json({ user: { id: user._id, email: user.email } });
+
   const { email, password } = req.body;
   if (!email || !password)
   return res.status(400).json({ message: "Email or password missing" });
   // console.log(User, email, password, "========");
-  const foundUser = await User.findOne({ email: email }).exec();
+  const foundUser = await Users.findOne({ email: email }).exec();
   // console.log(foundUser);
   if (!foundUser) {
     console.log("401:", email, "User does not exist");
@@ -57,11 +73,12 @@ const createNewUser = async (req, res) => {
   // const duplicate = await User.findOne({ email }).exec();
   // if (duplicate) return res.status(409).json({ error: "User Already Exists!" }); //Conflict
   try {
-      const hashedPwd = await bcrypt.hash(password, 10);
+      // const hashedPwd = await bcrypt.hash(password, 10);
       const result = await Users.create({
         username,
         email,
-        password: hashedPwd
+        password
+        // password: hashedPwd
       });
       console.log("result", result);
       res
