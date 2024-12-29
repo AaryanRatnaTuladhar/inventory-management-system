@@ -34,6 +34,18 @@ app.get('/', (req, res) => {
 
 app.use(require("./routes/auth"));
 
+// Dashboard route
+app.get('/dashboard', (req, res) => {
+    // Simulate a simple response
+    res.status(200).json({
+        message: "Welcome to your dashboard!",
+        data: {
+            username: "test_user",
+            role: "user",
+        },
+    });
+});
+
 app.listen(5000, () => {
     console.log('Server is running on port 5000');
 });

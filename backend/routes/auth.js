@@ -15,6 +15,8 @@ router.route("/signup").post(createNewUser);
 
 router.route("/login").post(loginUser);
 
+router.route("/dashboard")
+
 module.exports = router;
 
 // .post('/login', async (req, res) => {

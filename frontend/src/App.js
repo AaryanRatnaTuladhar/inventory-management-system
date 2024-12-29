@@ -11,14 +11,6 @@ const App = () => {
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/dashboard" element={<Dashboard />} />
-                {/* <Route
-                    path="/dashboard"
-                    element={
-                        <Dashboard
-                            user={JSON.parse(localStorage.getItem("user"))} // Retrieve user from localStorage
-                        />
-                    }
-                /> */}
             </Routes>
         </Router>
     );

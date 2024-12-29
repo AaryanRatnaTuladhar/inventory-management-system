@@ -27,13 +27,15 @@ const Login = () => {
             },
             body: JSON.stringify(formData),
           });
-    
+          console.log("FormData being sent:", formData);
+          
           const result = await response.json();
+          console.log("result", result);
     
           if (response.ok) {
             // Login successful
-            setError("");
-            localStorage.setItem("user", JSON.stringify(result.user)); // Save user data to localStorage
+            // setError("");
+            // localStorage.setItem("user", JSON.stringify(result.user)); // Save user data to localStorage
             navigate("/dashboard"); // Navigate to the dashboard
           } else {
             // Show error message from the server

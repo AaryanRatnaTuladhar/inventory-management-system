@@ -7,58 +7,69 @@ const bcrypt = require("bcrypt");
 
 const loginUser = async (req, res) => {
 
-  // const { email, password } = req.body;
-
-  // if (!email || !password) {
-  //   return res.status(400).json({ message: 'Email and password are required.' });
-  // }
-
-  // // Check for the user in the database
-  // const user = await Users.findOne({ email });
-
-  // if (!user || user.password !== password) { // Replace with proper password hashing check
-  //   return res.status(401).json({ message: 'Invalid credentials.' });
-  // }
-
-  // res.status(200).json({ user: { id: user._id, email: user.email } });
-
   const { email, password } = req.body;
+  console.log("email and pass",email,password);
+
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email and password are required.' });
+  }
+
+  // Check for the user in the database
+  const user = await Users.findOne({ email });
+
   if (!email || !password)
   return res.status(400).json({ message: "Email or password missing" });
-  // console.log(User, email, password, "========");
+
   const foundUser = await Users.findOne({ email: email }).exec();
-  // console.log(foundUser);
+  console.log(foundUser);
   if (!foundUser) {
     console.log("401:", email, "User does not exist");
     return res
       .status(401)
       .json({ error: "Unauthorized: User does not exist." });
   }
-  //evaluate password
-  // console.log("pass", password, "fUpass:", foundUser.password);
   const match = await bcrypt.compare(password, foundUser.password);
   if (match) {
-    const roles = Object.values(foundUser.roles);
-    // create and send JWT
-    // console.log("asdf", process.env.ACCESS_TOKEN_SECRET, foundUser.username);
-    // console.log(" secret", process.env.ACCESS_TOKEN_SECRET)
-    const accessToken = jwt.sign(
-      {
-        'UserInfo': 
-          { 
-            'username': foundUser.username, 
-            'roles': roles, 
-            'email': email
-          }
-      },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "5d" }
-    );
-    res.status(200).json({success: true, token: accessToken });
-  } else {
-    // console.log("lastres");
-    res.sendStatus({ success: false, message: 401} );
+    res.status(200).json({success: true, token: accessToken })
   }
+
+  res.status(200).json({ user: { id: user._id, email: foundUser.email } });
+
+  // const { email, password } = req.body;
+  // console.log(User, email, password, "========");
+  // const foundUser = await Users.findOne({ email: email }).exec();
+  // console.log(foundUser);
+  // if (!foundUser) {
+  //   console.log("401:", email, "User does not exist");
+  //   return res
+  //     .status(401)
+  //     .json({ error: "Unauthorized: User does not exist." });
+  // }
+//   //evaluate password
+//   // console.log("pass", password, "fUpass:", foundUser.password);
+//   const match = await bcrypt.compare(password, foundUser.password);
+//   if (match) {
+//     // const roles = Object.values(foundUser.roles);
+//     // create and send JWT
+//     // console.log("asdf", process.env.ACCESS_TOKEN_SECRET, foundUser.username);
+//     // console.log(" secret", process.env.ACCESS_TOKEN_SECRET)
+//     const accessToken = jwt.sign(
+//       {
+//         'UserInfo': 
+//           { 
+//             'username': foundUser.username, 
+//             // 'roles': roles, 
+//             'email': email
+//           }
+//       },
+//       process.env.ACCESS_TOKEN_SECRET,
+//       { expiresIn: "5d" }
+//     );
+//     res.status(200).json({success: true, token: accessToken });
+//   } else {
+//     // console.log("lastres");
+//     res.sendStatus({ success: false, message: 401} );
+//   }
 };
 
 const createNewUser = async (req, res) => {

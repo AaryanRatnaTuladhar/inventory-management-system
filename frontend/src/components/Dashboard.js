@@ -13,7 +13,7 @@ const Dashboard = ({ user }) => {
 
     return (
         <div className="dashboard-container">
-            <h1>Welcome, {user?.username || "User"}!</h1>
+            <h1>Welcome, to the dashboard {user?.username || "User"}!</h1>
             <p>You have successfully logged in or signed up.</p>
             <button onClick={handleLogout}>Logout</button>
         </div>
