@@ -1,9 +1,11 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const cookieParser = require("cookie-parser");
 const app = express();
 const Product = require('./models/Product');
+const { verifyJWT } = require('./middleware/verifyJWT.js');
 
 app.use(express.json());
 app.use(cors({
@@ -34,16 +36,13 @@ app.get('/', (req, res) => {
 
 app.use(require("./routes/auth"));
 
-// Dashboard route
-app.get('/dashboard', (req, res) => {
-    // Simulate a simple response
+app.get('/dashboard',verifyJWT, (req, res) => {
     res.status(200).json({
         message: "Welcome to your dashboard!",
         data: {
-            username: "test_user",
-            role: "user",
+            user: req.email,
         },
-    });
+    })
 });
 
 app.listen(5000, () => {
