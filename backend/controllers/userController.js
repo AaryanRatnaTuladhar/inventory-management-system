@@ -10,8 +10,9 @@ const loginUser = async (req, res) => {
   const { email, password } = req.body;
   // console.log("email and pass",email,password);
 
-  if (!email || !password)
+  if (!email || !password) {
     return res.status(400).json({ message: "Email or password missing" });
+  }
 
   const foundUser = await Users.findOne({ email: email }).exec();
   console.log(foundUser);
@@ -37,7 +38,7 @@ const loginUser = async (req, res) => {
     );
     res.status(200).json({success: true, token: accessToken })
   } else {
-    res.sendStatus({ success: false, message: 401} );
+    return res.status(401).json({ success: false, message: "Invalid credentials" });
   }
 };
 

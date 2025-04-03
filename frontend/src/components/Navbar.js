@@ -4,28 +4,16 @@ import '../styles/Navbar.css';
 
 const Navbar = () => {
     return(
-        <nav className="navbar">
-        <div className="navbar-logo">
-          <Link to="/">MyApp</Link>
-        </div>
-        <ul className="navbar-links">
-          <li>
-            <Link to="/">Home</Link>
-          </li>
-          <li>
-            <Link to="/about">About</Link>
-          </li>
-          <li>
-            <Link to="/dashboard">Dashboard</Link>
-          </li>
-          <li>
-            <Link to="/login">Login</Link>
-          </li>
-          <li>
-            <Link to="/signup">Sign Up</Link>
-          </li>
+     <nav className="navbar">
+      <div className="nav-container">
+        <h1 className="logo">IMS</h1>
+        <ul className="nav-links">
+          <li><Link to="/dashboard">Dashboard</Link></li>
+          <li><Link to="/inventory">Inventory</Link></li>
+          <li><Link to="/login">Logout</Link></li>
         </ul>
-      </nav>
+      </div>
+    </nav>
     );
 };
 

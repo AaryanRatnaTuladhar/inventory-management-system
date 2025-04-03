@@ -1,21 +1,15 @@
 import React from "react";
-import { useNavigate } from "react-router-dom"; // For navigation
 import "../styles/Dashboard.css"; // Optional: Add styles for the dashboard
+import Card from "../components/Card";
+import { FaUser, FaShoppingCart, FaDollarSign } from "react-icons/fa";
 
 const Dashboard = () => {
-    const navigate = useNavigate();
-
-    // const handleLogout = () => {
-    //     // Clear any stored user data (e.g., from localStorage or state)
-    //     localStorage.removeItem("user");
-    //     navigate("/login"); // Redirect to the login page
-    // };
-
     return (
-        <div className="dashboard-container">
-            <h1>Welcome, to the dashboard!</h1>
-            <p>You have successfully logged in or signed up.</p>
-            {/* <button onClick={handleLogout}>Logout</button> */}
+        <div className="dashboard">
+            <Card title="Today's Sales" value="30,000" icon={<FaUser />} color="purple" />
+            <Card title="Today's Total Orders" value="270" icon={<FaShoppingCart />} color="blue" />
+            <Card title="Today's Revenue" value="1,000" icon={<FaDollarSign />} color="red" />
+            <Card title="Today's Customers" value="100" icon={<FaUser />} color="orange" />
         </div>
     );
 };

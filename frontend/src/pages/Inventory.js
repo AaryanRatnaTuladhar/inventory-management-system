@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-const InventoryTable = () => {
+const Inventory = () => {
     const [inventory, setInventory] = useState([]);
 
     useEffect(() => {
@@ -31,4 +31,4 @@ const InventoryTable = () => {
     );
 };
 
-export default InventoryTable;
+export default Inventory;

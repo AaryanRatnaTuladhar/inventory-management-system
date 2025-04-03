@@ -10,7 +10,7 @@ const Login = () => {
       });
     
       const [error, setError] = useState("");
-      const navigate = useNavigate(); // To programmatically navigate to another page
+      const navigate = useNavigate();
     
       const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -36,6 +36,10 @@ const Login = () => {
             // Login successful
             // setError("");
             // localStorage.setItem("user", JSON.stringify(result.user)); // Save user data to localStorage
+
+            // ✅ Save token in localStorage
+            localStorage.setItem("token", result.token); 
+            
             navigate("/dashboard"); // Navigate to the dashboard
           } else {
             // Show error message from the server
