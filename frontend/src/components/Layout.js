@@ -43,7 +43,7 @@ const styles = {
     flex: 1,
     padding: "20px",
     marginTop: "10vh", // Adjust this to match your navbar height
-    marginLeft: "50vh", // Adjust this to match your navbar height
+    marginLeft: "35vh", // Adjust this to match your navbar height
     overflowY: "auto", // Enables scrolling if content overflows
   },
 };

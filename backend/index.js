@@ -6,7 +6,7 @@ const cookieParser = require("cookie-parser");
 const app = express();
 const Product = require('./models/Product');
 const { verifyJWT } = require('./middleware/verifyJWT.js');
-
+const productRoutes = require('./routes/productRoutes');
 app.use(express.json());
 app.use(cors({
     origin: [
@@ -45,28 +45,9 @@ app.get('/dashboard',verifyJWT, (req, res) => {
     })
 });
 
+// app.use("/api/products", require("./routes/products"));
+app.use('/api/products', productRoutes);
+
 app.listen(5000, () => {
     console.log('Server is running on port 5000');
-});
-
-
-// Add product
-app.post('/api/products', async (req, res) => {
-    const product = new Product(req.body);
-    try {
-        await product.save();
-        res.status(201).send(product);
-    } catch (err) {
-        res.status(400).send(err);
-    }
-});
-
-// Get all products
-app.get('/api/products', async (req, res) => {
-    try {
-        const products = await Product.find();
-        res.send(products);
-    } catch (err) {
-        res.status(500).send(err);
-    }
 });

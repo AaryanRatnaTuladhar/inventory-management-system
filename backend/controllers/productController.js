@@ -4,22 +4,16 @@ const mongoose = require("mongoose");
 
 const createNewProduct = async (req, res) => {
   try {
-    const { name, category, price, quantity } = req.body;
-
-    const validation = ProductValidation.safeParse(req.body);
-
-    if (!validation.success) {
-      console.log("\n\n err \n\n");
-      return res
-        .status(StatusCodes.BAD_REQUEST)
-        .json({ success: false, error: validation.error.errors });
-    }
+    const { name, category, cost_price, selling_price, quantity } = req.body;
     const result = await Product.create({
       name,
       category,
-      price,
-      quantity
-
+      cost_price,
+      selling_price,
+      quantity,
+      supplier,
+      supplier_contact,
+      supplier_address
     });
     console.log("Result after creating", result);
     if (result) {
@@ -38,7 +32,7 @@ const createNewProduct = async (req, res) => {
   }
 };
 
-const getAllProductes = async (req, res) => {
+const getAllProducts = async (req, res) => {
   try {
     const allProductes = await Product.find({}).exec();
     if (allProductes) {
@@ -57,10 +51,21 @@ const getAllProductes = async (req, res) => {
   }
 };
 
-const deleteProduct = async (req, res) => {
-  console.log(req.body.id);
+// Get single product
+const getProductById = async (req, res) => {
   try {
-    const ProductId = req.body.id;
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+    res.json(product);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+const deleteProduct = async (req, res) => {
+  console.log("CONBTORLLER",req.body.id);
+  try {
+    const ProductId = req.params.id;
     const result = await Product.findOneAndDelete({ _id: ProductId });
     if (result) {
       return res.status(200).json({
@@ -108,7 +113,8 @@ const updateProduct = async (req, res) => {
 };
 module.exports = { 
   createNewProduct, 
-  getAllProductes, 
+  getAllProducts,
+  getProductById, 
   deleteProduct, 
   updateProduct
 };
