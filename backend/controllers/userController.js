@@ -1,174 +1,156 @@
-const Users = require("../models/User");
-const jwt = require("jsonwebtoken");
-// require('dotenv').config();
+const openCollection = require("../database/databaseConnection");
+const User = require("../models/userModel").User;
+const UserLogin = require("../models/userModel").UserLogin;
+
+const GenerateAccessToken =
+  require("../helpers/authHelper").GenerateAccessToken;
+const GenerateRefreshToken =
+  require("../helpers/authHelper").GenerateRefreshToken;
+const GetIdFromAccessToken =
+  require("../helpers/authHelper").GetIdFromAccessToken;
 const bcrypt = require("bcrypt");
-// const allRoles = require("../config/roles_list");
-// const crypto = require("crypto");
+const { promisify } = require("util");
+const sleep = promisify(setTimeout);
+const { ObjectId } = require("mongodb");
+const objectInspect = require("object-inspect");
+const path = require("path");
+const fs = require("fs");
+const IsAuthenticated = require("../helpers/authHelper").IsAuthenticated;
+// const { message } = require("statuses");
+// const { error } = require("console");
 
-const loginUser = async (req, res) => {
 
-  const { email, password } = req.body;
-  // console.log("email and pass",email,password);
 
-  if (!email || !password) {
-    return res.status(400).json({ message: "Email or password missing" });
-  }
+const saltRounds = 5; //rounds to hash the password
 
-  const foundUser = await Users.findOne({ email: email }).exec();
-  console.log(foundUser);
-  if (!foundUser) {
-    console.log("401:", email, "User does not exist");
-    return res
-      .status(401)
-      .json({ error: "Unauthorized: User does not exist." });
-  }
-
-  const match = await bcrypt.compare(password, foundUser.password);
-  if (match) {
-
-    const accessToken = jwt.sign(
-      {
-        'UserInfo':
-        {
-          'email':email
-        }
-      },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "7d" }
-    );
-    res.status(200).json({success: true, token: accessToken })
-  } else {
-    return res.status(401).json({ success: false, message: "Invalid credentials" });
-  }
-};
-
-const createNewUser = async (req, res) => {
-  const { username, email, password} = req.body;
-  // console.log("usernaem, email, password", username, email, password);
-  if (!username || !email || !password)
-    return res
-      .status(400)
-      .json({ message: "Username | password | email are required" });
-
-  // //check for duplicate emails in database;
-  // const duplicate = await User.findOne({ email }).exec();
-  // if (duplicate) return res.status(409).json({ error: "User Already Exists!" }); //Conflict
+async function createUser(req, res) {
   try {
-      const hashedPwd = await bcrypt.hash(password, 10);
-      const result = await Users.create({
-        username,
-        email,
-        password
-        // password: hashedPwd
-      });
-      console.log("result", result);
-      res
-        .status(201)
-        .json({ success: true, message: `New user ${username} created ` });
+    const userCollection = await openCollection("users");
 
-  } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
-  }
-};
+    // Create a new User object from the request body with isAdmin defaulting to false
+    const user = new User(req.body.userName, req.body.email, req.body.password, false);
 
-
-const getAllUsers = async (req, res) => {
-  try {
-    // console.log("\nhello");
-    const allUsers = await Users.find({}).exec();
-    return res.status(200).json(allUsers);
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json(allUsers);
-  }
-};
-
-const deleteUser = async (req, res) => {
-  console.log(req.body.id);
-  try {
-    const UserId = req.body.id;
-    const result = await Users.findOneAndDelete({ _id: UserId });
-    if (result) {
-      return res.status(200).json({
-        success: true,
-        message: "User succesfully deleted.",
-      });
-    }
-  } catch (err) {
-    console.error(err);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal Server Error" });
-  }
-};
-
-const updateUser = async (req, res) => {
-  try {
-    const userId = req.params.id; // Get company ID from request parameters
-    const updateData = req.body; // Get update data from request body
-
-    const updateObject = { $set: updateData };
-
-    // Find the company by ID and update
-    const updatedUser = await User.findByIdAndUpdate(userId, updateObject, {
-      new: true,
-    });
-
-    if (!updatedUser) {
+    // Check if the email already exists
+    const existingUser = await userCollection.findOne({ email: user.email });
+    if (existingUser) {
       return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+        .status(409)
+        .json({ error: "User with this email already exists" });
     }
 
-    return res.status(200).json({
-      success: true,
-      message: "User updated successfully",
-      user: updatedUser,
+    // Hash the password before storing it in the database
+    const hashedPassword = await bcrypt.hash(user.password, saltRounds);
+    user.password = hashedPassword;
+    // Insert the new user into the database
+    const result = await userCollection.insertOne(user);
+
+    // Check if the insertion was successful
+    if (result.acknowledged && result.insertedId) {
+      return res.json({ message: "User created successfully" });
+    } else {
+      return res.json({ error: "Failed to create user" });
+    }
+  } catch (error) {
+    console.error("Error creating user:", error);
+    return res.json({ error: "Internal server error" });
+  }
+}
+
+async function login(req, res) {
+  try {
+    const userCollection = await openCollection("users");
+
+    const user = new UserLogin(req.body.email, req.body.password);
+    const existingUser = await userCollection.findOne({ email: user.email });
+    if (!existingUser) {
+      return res.json({ message: "User with this email does not exist" });
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      user.password,
+      existingUser.password
+    );
+    if (!isPasswordValid) {
+      return res.json({ message: "Invalid password" });
+    }
+    console.log("existingUser._id:", existingUser._id);
+    const accessToken = GenerateAccessToken(existingUser._id.toHexString());
+    const refreshToken = GenerateRefreshToken(existingUser._id.toHexString());
+
+    return res.json({
+      message: "User logged in successfully",
+      ID: existingUser._id,
+      email: existingUser.email,
+      userName: existingUser.userName,
+      isAdmin: existingUser.isAdmin || false, // Include isAdmin flag, default to false if not set
+      accessToken: accessToken,
+      refreshToken: refreshToken,
     });
   } catch (error) {
-    console.error("Error updating user:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
+    console.error("Error during login:", error);
+    return res.json({ error: "Internal server error" });
   }
-};
+}
 
-const getUserDetails = async (req, res) => {
-  const authHeader = req.headers.authorization || req.headers.Authorization;
-  if (!authHeader.startsWith("Bearer ")) {
-    return res
-      .status(401)
-      .json({ message: "Bearer missing in authorization header." });
+async function deleteUser(req, res) {
+  try {
+    const userCollection = await openCollection("users");
+    // const accessTokenId = GetIdFromAccessToken(req);
+
+    const { userId } = req.body;
+    // searching the user based on the id and deleting it
+    const result = await userCollection.findOneAndDelete({
+      _id: new ObjectId(userId),
+    });
+    if (result.value) {
+      return res.status(200).json({ message: "User deleted successfully" });
+    } else {
+      return res.status(501).json({ message: "Cannot find or delete user" });
+    }
+  } catch (error) {
+    return res.json("Internal server error.");
   }
+}
 
-  const token = authHeader.split(" ")[1];
-  // console.log("TOKEN ",token);
-  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decoded) => {
-    if (err) {
-      console.error("\n Error:", err);
-      return res.sendStatus(403);
-    }
 
-    const foundUser = await User.findOne({
-      email: decoded.UserInfo.email,
-    }).exec();
-    // console.log(foundUser);
-    if (!foundUser) {
-      console.log("401:", email, "User does not exist");
-      return res
-        .status(401)
-        .json({ error: "Unauthorized: User does not exist." });
-    }
+async function getUserByAuth(req, res) {
+  try {
+    const userCollection = await openCollection("users");
+    const accessTokenId = GetIdFromAccessToken(req);
+    const users = await userCollection
+      .find({ _id: new ObjectId(accessTokenId) })
+      .sort({ _id: -1 })
+      .toArray();
 
-    res.status(200).json({ success: foundUser }); // Attach result to req object
-  });
-};
+    return res.json(users);
+  } catch (error) {
+    res.json("Internal server error");
+  }
+}
+async function getAllUsers(req, res) {
+  try {
+    
+    IsAuthenticated(req, res, async function (err) {//the function(err) is a callback function that checks if it worked properly or not
+      if (err) {
+        return res.status(401).json({ message: "Authentication failed" });
+      }
+
+      const userCollection = await openCollection("users");
+      const users = await userCollection.find().sort({ _id: -1 }).toArray();
+
+      return res.json(users);
+    });
+  } catch (error) {
+    console.log("could not retrieve users");
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
 
 module.exports = {
-  loginUser,
-  createNewUser,
-  getAllUsers,
+
+  createUser,
+  login,
   deleteUser,
-  updateUser,
-  getUserDetails
+  getUserByAuth,
+  getAllUsers
 };
