@@ -1,7 +1,7 @@
 const { ObjectId } = require('mongodb');
 
 class Product {
-  constructor(name, description, category, price, quantity, minStockLevel, sku, supplierName, supplierContact, supplierAddress) {
+  constructor(name, description, category, price, quantity, minStockLevel, sku, supplierName, supplierContact, supplierEmail, supplierAddress) {
     this._id = new ObjectId();
     this.name = name;
     this.description = description;
@@ -12,6 +12,7 @@ class Product {
     this.sku = sku || `SKU-${Math.floor(Math.random() * 10000)}`;
     this.supplierName = supplierName || '';
     this.supplierContact = supplierContact || '';
+    this.supplierEmail = supplierEmail || '';
     this.supplierAddress = supplierAddress || '';
     this.createdAt = new Date();
     this.updatedAt = new Date();

@@ -1,7 +1,7 @@
 const { ObjectId } = require('mongodb');
 
 class Sale {
-  constructor(productId, productName, quantity, unitPrice, totalAmount, customerName, customerContact, saleDate, paymentMethod, notes) {
+  constructor(productId, productName, quantity, unitPrice, totalAmount, customerName, customerContact, saleDate, paymentMethod, notes, supplierName, supplierContact, status) {
     this._id = new ObjectId();
     this.productId = productId;
     this.productName = productName;
@@ -13,9 +13,11 @@ class Sale {
     this.saleDate = saleDate || new Date();
     this.paymentMethod = paymentMethod || 'Cash';
     this.notes = notes || '';
+    this.supplierName = supplierName || '';
+    this.supplierContact = supplierContact || '';
     this.createdAt = new Date();
     this.transactionId = `TXN-${Math.floor(Math.random() * 1000000)}`;
-    this.status = 'Completed';
+    this.status = status || 'Pending';
   }
 }
 

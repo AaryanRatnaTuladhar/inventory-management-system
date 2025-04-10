@@ -52,6 +52,7 @@ async function createProduct(req, res) {
       sku,
       supplierName,
       supplierContact,
+      supplierEmail,
       supplierAddress
     } = req.body;
     
@@ -71,6 +72,7 @@ async function createProduct(req, res) {
       sku,
       supplierName || "",
       supplierContact || "",
+      supplierEmail || "",
       supplierAddress || ""
     );
     
@@ -118,6 +120,7 @@ async function updateProduct(req, res) {
       sku,
       supplierName,
       supplierContact,
+      supplierEmail,
       supplierAddress
     } = req.body;
     
@@ -136,6 +139,7 @@ async function updateProduct(req, res) {
         sku: sku || existingProduct.sku,
         supplierName: supplierName !== undefined ? supplierName : existingProduct.supplierName,
         supplierContact: supplierContact !== undefined ? supplierContact : existingProduct.supplierContact,
+        supplierEmail: supplierEmail !== undefined ? supplierEmail : existingProduct.supplierEmail,
         supplierAddress: supplierAddress !== undefined ? supplierAddress : existingProduct.supplierAddress,
         updatedAt: new Date()
       }

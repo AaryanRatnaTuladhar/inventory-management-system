@@ -6,7 +6,52 @@ const { ObjectId } = require("mongodb");
 async function getAllSales(req, res) {
   try {
     const salesCollection = await openCollection("sales");
-    const sales = await salesCollection.find().sort({ saleDate: -1 }).toArray();
+    
+    // Extract query parameters for sorting and filtering
+    const { 
+      sortField = 'saleDate', 
+      sortOrder = 'desc',
+      search,
+      startDate,
+      endDate,
+      paymentMethod,
+      supplierName
+    } = req.query;
+    
+    // Create sort object
+    const sortOptions = {};
+    sortOptions[sortField] = sortOrder === 'asc' ? 1 : -1;
+    
+    // Create filter object
+    const filter = {};
+    
+    // Handle search query - search by product name or transaction ID
+    if (search) {
+      filter.$or = [
+        { productName: { $regex: search, $options: 'i' } },
+        { transactionId: { $regex: search, $options: 'i' } },
+        { customerName: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    // Handle date filtering
+    if (startDate || endDate) {
+      filter.saleDate = {};
+      if (startDate) filter.saleDate.$gte = new Date(startDate);
+      if (endDate) filter.saleDate.$lte = new Date(endDate);
+    }
+    
+    // Handle payment method filter
+    if (paymentMethod) {
+      filter.paymentMethod = paymentMethod;
+    }
+    
+    // Handle supplier filter
+    if (supplierName) {
+      filter.supplierName = supplierName;
+    }
+    
+    const sales = await salesCollection.find(filter).sort(sortOptions).toArray();
     return res.status(200).json({ sales, message: "Sales fetched successfully" });
   } catch (error) {
     console.error("Error fetching sales:", error);
@@ -50,7 +95,10 @@ async function createSale(req, res) {
       customerContact,
       paymentMethod,
       notes,
-      saleDate
+      saleDate,
+      supplierName,
+      supplierContact,
+      status
     } = req.body;
     
     // Validate required fields
@@ -78,7 +126,7 @@ async function createSale(req, res) {
     const unitPrice = product.price;
     const totalAmount = unitPrice * quantity;
     
-    // Create new sale
+    // Create new sale with supplier information
     const sale = new Sale(
       productId,
       product.name,
@@ -89,7 +137,10 @@ async function createSale(req, res) {
       customerContact,
       saleDate ? new Date(saleDate) : new Date(),
       paymentMethod,
-      notes
+      notes,
+      supplierName || product.supplierName,
+      supplierContact || product.supplierContact,
+      status
     );
     
     // Update product stock
@@ -174,8 +225,8 @@ async function cancelSale(req, res) {
     // Create stock history entry
     const stockHistoryEntry = {
       date: new Date(),
-      quantity: product.quantity + sale.quantity,
-      previousQuantity: product.quantity,
+      quantity: Number(product.quantity) + Number(sale.quantity),
+      previousQuantity: Number(product.quantity),
       action: 'Sale Cancelled',
       saleId: sale._id.toString()
     };
@@ -196,7 +247,7 @@ async function cancelSale(req, res) {
       { _id: new ObjectId(sale.productId) },
       { 
         $set: { 
-          quantity: product.quantity + sale.quantity,
+          quantity: Number(product.quantity) + Number(sale.quantity),
           updatedAt: new Date()
         },
         $push: { 
@@ -413,10 +464,72 @@ async function getSalesStats(req, res) {
   }
 }
 
+// Update a sale (change status, etc.)
+async function updateSale(req, res) {
+  try {
+    const salesCollection = await openCollection("sales");
+    const saleId = req.params.id;
+    
+    if (!ObjectId.isValid(saleId)) {
+      return res.status(400).json({ error: "Invalid sale ID" });
+    }
+    
+    // Get the existing sale
+    const existingSale = await salesCollection.findOne({ _id: new ObjectId(saleId) });
+    
+    if (!existingSale) {
+      return res.status(404).json({ error: "Sale not found" });
+    }
+    
+    // Prepare update data
+    const { status } = req.body;
+    const updates = {
+      updatedAt: new Date()
+    };
+    
+    // Only allow updating specific fields
+    if (status) {
+      // Ensure status is valid
+      if (!['Pending', 'Completed', 'Cancelled'].includes(status)) {
+        return res.status(400).json({ error: "Invalid status. Must be Pending, Completed, or Cancelled" });
+      }
+      
+      // Don't allow changing from Cancelled
+      if (existingSale.status === 'Cancelled') {
+        return res.status(400).json({ error: "Cannot update a cancelled sale" });
+      }
+      
+      updates.status = status;
+    }
+    
+    // Update the sale in the database
+    const result = await salesCollection.updateOne(
+      { _id: new ObjectId(saleId) },
+      { $set: updates }
+    );
+    
+    if (result.acknowledged && result.matchedCount > 0) {
+      // Get the updated sale
+      const updatedSale = await salesCollection.findOne({ _id: new ObjectId(saleId) });
+      
+      return res.status(200).json({ 
+        sale: updatedSale,
+        message: "Sale updated successfully" 
+      });
+    } else {
+      return res.status(500).json({ error: "Failed to update sale" });
+    }
+  } catch (error) {
+    console.error("Error updating sale:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+}
+
 module.exports = {
   getAllSales,
   getSaleById,
   createSale,
   cancelSale,
-  getSalesStats
+  getSalesStats,
+  updateSale
 }; 

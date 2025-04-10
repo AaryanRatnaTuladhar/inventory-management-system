@@ -25,6 +25,7 @@ router.get('/sales', saleController.getAllSales);
 router.get('/sales/stats', saleController.getSalesStats);
 router.get('/sales/:id', saleController.getSaleById);
 router.post('/sales', saleController.createSale);
+router.put('/sales/:id', saleController.updateSale);
 router.put('/sales/:id/cancel', saleController.cancelSale);
 
 module.exports = router;
